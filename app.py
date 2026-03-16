@@ -21,7 +21,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 NVIDIA_API_KEY = os.getenv("nvidia_api_key")
 
 CLAUDE_MODEL = "claude-opus-4-6"
-GEMINI_MODEL = "gemini-2.5-pro"
+GEMINI_MODEL = "gemini-3.1-pro-preview"
 KIMI_MODEL = "moonshotai/kimi-k2.5"
 
 # ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ st.caption("Multi-agent grading powered by Claude Opus, Gemini Pro & Kimi K2.5")
 # --- Model display names and internal keys ---
 MODEL_OPTIONS = {
     "Claude Opus 4.6": "Claude",
-    "Gemini 2.5 Pro": "Gemini",
+    "Gemini 3.1 Pro": "Gemini",
     "Kimi K2.5 Moonshot": "Kimi",
 }
 MODEL_KEY_REQUIRED = {

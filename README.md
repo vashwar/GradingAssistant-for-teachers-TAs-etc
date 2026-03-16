@@ -1,6 +1,6 @@
 # AI Grading Assistant
 
-A multi-agent AI grading tool that uses **Claude Opus 4.6**, **Gemini 2.5 Pro**, and **Kimi K2.5** in a collaborative workflow to grade student essays against a rubric. Built with Streamlit.
+A multi-agent AI grading tool that uses **Claude Opus 4.6**, **Gemini 3.1 Pro**, and **Kimi K2.5** in a collaborative workflow to grade student essays against a rubric. Built with Streamlit.
 
 ## How It Works
 
@@ -29,7 +29,7 @@ Reports can be downloaded as PDF.
 - Python 3.9+
 - At least two of the following API keys (for your chosen model pair):
   - [Anthropic API key](https://console.anthropic.com/) (for Claude Opus 4.6)
-  - [Google Gemini API key](https://aistudio.google.com/apikey) (for Gemini 2.5 Pro)
+  - [Google Gemini API key](https://aistudio.google.com/apikey) (for Gemini 3.1 Pro)
   - [NVIDIA Build API key](https://build.nvidia.com/) (for Kimi K2.5)
 
 ### Installation
@@ -66,7 +66,7 @@ streamlit run app.py
 
 ## Usage
 
-1. Select the **Chief Grader** and **Assistant** models in the sidebar (any two of Claude Opus 4.6, Gemini 2.5 Pro, or Kimi K2.5).
+1. Select the **Chief Grader** and **Assistant** models in the sidebar (any two of Claude Opus 4.6, Gemini 3.1 Pro, or Kimi K2.5).
 2. Upload three documents (.txt or .pdf):
    - Assignment Prompt
    - Grading Rubric
@@ -78,7 +78,7 @@ streamlit run app.py
 
 - [Streamlit](https://streamlit.io/) — UI framework
 - [Anthropic SDK](https://docs.anthropic.com/) — Claude Opus 4.6
-- [Google GenAI SDK](https://ai.google.dev/) — Gemini 2.5 Pro
+- [Google GenAI SDK](https://ai.google.dev/) — Gemini 3.1 Pro
 - [OpenAI SDK](https://platform.openai.com/docs/) — Kimi K2.5 (via NVIDIA Build API)
 - [fpdf2](https://py-pdf.github.io/fpdf2/) — PDF generation
 - [PyPDF2](https://pypdf2.readthedocs.io/) — PDF text extraction
