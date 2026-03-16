@@ -1,16 +1,16 @@
 # AI Grading Assistant
 
-A multi-agent AI grading tool that uses **Claude Opus 4.6** and **Gemini 2.5 Pro** in a collaborative workflow to grade student essays against a rubric. Built with Streamlit.
+A multi-agent AI grading tool that uses **Claude Opus 4.6**, **Gemini 2.5 Pro**, and **Kimi K2.5** in a collaborative workflow to grade student essays against a rubric. Built with Streamlit.
 
 ## How It Works
 
 The tool runs a 3-phase multi-agent workflow:
 
-1. **Phase 1 — Independent Analysis:** Both models independently analyze the student essay against the assignment prompt and rubric, producing Draft 1.
+1. **Phase 1 — Independent Analysis:** Both selected models independently analyze the student essay against the assignment prompt and rubric, producing Draft 1.
 2. **Phase 2 — Cross-Review:** Each model reviews the other's Draft 1, identifying missed insights and refining their analysis into Draft 2.
 3. **Phase 3 — Final Synthesis:** The Chief Grader combines both Draft 2 analyses into a single authoritative report.
 
-You choose which model acts as **Chief Grader** (final decision-maker) and which acts as **Assistant** via the sidebar.
+You choose which model acts as **Chief Grader** (final decision-maker) and which acts as **Assistant** via the sidebar. Any two of the three available models can be paired.
 
 ## Final Report Format
 
@@ -27,8 +27,10 @@ Reports can be downloaded as PDF.
 ### Prerequisites
 
 - Python 3.9+
-- An [Anthropic API key](https://console.anthropic.com/)
-- A [Google Gemini API key](https://aistudio.google.com/apikey)
+- At least two of the following API keys (for your chosen model pair):
+  - [Anthropic API key](https://console.anthropic.com/) (for Claude Opus 4.6)
+  - [Google Gemini API key](https://aistudio.google.com/apikey) (for Gemini 2.5 Pro)
+  - [NVIDIA Build API key](https://build.nvidia.com/) (for Kimi K2.5)
 
 ### Installation
 
@@ -51,7 +53,10 @@ Edit `.env`:
 ```
 ANTHROPIC_API_KEY=your_key_here
 GEMINI_API_KEY=your_key_here
+nvidia_api_key=your_key_here
 ```
+
+Only the keys for your selected model pair are required.
 
 ### Run
 
@@ -61,7 +66,7 @@ streamlit run app.py
 
 ## Usage
 
-1. Select the **Chief Grader** model in the sidebar (Claude Opus 4.6 or Gemini 2.5 Pro).
+1. Select the **Chief Grader** and **Assistant** models in the sidebar (any two of Claude Opus 4.6, Gemini 2.5 Pro, or Kimi K2.5).
 2. Upload three documents (.txt or .pdf):
    - Assignment Prompt
    - Grading Rubric
@@ -74,6 +79,7 @@ streamlit run app.py
 - [Streamlit](https://streamlit.io/) — UI framework
 - [Anthropic SDK](https://docs.anthropic.com/) — Claude Opus 4.6
 - [Google GenAI SDK](https://ai.google.dev/) — Gemini 2.5 Pro
+- [OpenAI SDK](https://platform.openai.com/docs/) — Kimi K2.5 (via NVIDIA Build API)
 - [fpdf2](https://py-pdf.github.io/fpdf2/) — PDF generation
 - [PyPDF2](https://pypdf2.readthedocs.io/) — PDF text extraction
 

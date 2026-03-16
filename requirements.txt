@@ -1,6 +1,7 @@
 streamlit
 anthropic
 google-genai
+openai
 python-dotenv
 fpdf2
 PyPDF2

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import anthropic
 from google import genai
 from google.genai import types
+from openai import OpenAI
 from PyPDF2 import PdfReader
 from fpdf import FPDF
 
@@ -17,9 +18,11 @@ load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+NVIDIA_API_KEY = os.getenv("nvidia_api_key")
 
 CLAUDE_MODEL = "claude-opus-4-6"
 GEMINI_MODEL = "gemini-2.5-pro"
+KIMI_MODEL = "moonshotai/kimi-k2.5"
 
 # ---------------------------------------------------------------------------
 # Prompt Templates
@@ -120,17 +123,62 @@ def call_gemini(system_prompt: str, user_prompt: str) -> str:
     return response.text
 
 
+def call_kimi(system_prompt: str, user_prompt: str) -> str:
+    """Send a request to Kimi K2.5 via NVIDIA Build API and return the response text."""
+    client = OpenAI(
+        base_url="https://integrate.api.nvidia.com/v1",
+        api_key=NVIDIA_API_KEY,
+    )
+    response = client.chat.completions.create(
+        model=KIMI_MODEL,
+        max_tokens=4096,
+        temperature=0.2,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    return response.choices[0].message.content
+
+
 def call_model(role: str, system_prompt: str, user_prompt: str, role_map: dict) -> str:
     """Dispatch to the correct model based on role assignment."""
     model_name = role_map[role]
     if model_name == "Claude":
         return call_claude(system_prompt, user_prompt)
-    else:
+    elif model_name == "Gemini":
         return call_gemini(system_prompt, user_prompt)
+    else:
+        return call_kimi(system_prompt, user_prompt)
+
+
+def _sanitize_for_pdf(text: str) -> str:
+    """Replace non-ASCII characters with ASCII equivalents for Helvetica."""
+    replacements = {
+        "\u2014": "--",   # em-dash
+        "\u2013": "-",    # en-dash
+        "\u2018": "'",    # left single quote
+        "\u2019": "'",    # right single quote (apostrophe)
+        "\u201c": '"',    # left double quote
+        "\u201d": '"',    # right double quote
+        "\u2026": "...",  # ellipsis
+        "\u2022": "-",    # bullet
+        "\u2192": "->",   # right arrow
+        "\u2190": "<-",   # left arrow
+        "\u2003": " ",    # em space
+        "\u00a0": " ",    # non-breaking space
+        "\u00b7": "-",    # middle dot
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    # Strip any remaining non-latin1 characters
+    text = text.encode("latin-1", errors="replace").decode("latin-1")
+    return text
 
 
 def markdown_to_pdf(markdown_text: str) -> bytes:
     """Convert a Markdown string into PDF bytes using fpdf2."""
+    markdown_text = _sanitize_for_pdf(markdown_text)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -188,37 +236,47 @@ def _render_rich_line(pdf: FPDF, base_font: str, size: int, text: str):
 
 st.set_page_config(page_title="AI Grading Assistant", page_icon="\U0001f4dd", layout="wide")
 st.title("AI Grading Assistant")
-st.caption("Multi-agent grading powered by Claude Opus & Gemini Pro")
+st.caption("Multi-agent grading powered by Claude Opus, Gemini Pro & Kimi K2.5")
 
-# --- Validate API keys ---
-keys_ok = True
-if not ANTHROPIC_API_KEY:
-    st.error("Missing `ANTHROPIC_API_KEY`. Add it to your `.env` file.")
-    keys_ok = False
-if not GEMINI_API_KEY:
-    st.error("Missing `GEMINI_API_KEY`. Add it to your `.env` file.")
-    keys_ok = False
+# --- Model display names and internal keys ---
+MODEL_OPTIONS = {
+    "Claude Opus 4.6": "Claude",
+    "Gemini 2.5 Pro": "Gemini",
+    "Kimi K2.5 Moonshot": "Kimi",
+}
+MODEL_KEY_REQUIRED = {
+    "Claude": ("ANTHROPIC_API_KEY", ANTHROPIC_API_KEY),
+    "Gemini": ("GEMINI_API_KEY", GEMINI_API_KEY),
+    "Kimi": ("nvidia_api_key", NVIDIA_API_KEY),
+}
 
 # --- Sidebar: role selection ---
 with st.sidebar:
     st.header("Role Assignment")
-    chief_choice = st.radio(
-        "Select Chief Grader",
-        options=["Claude Opus 4.6", "Gemini 2.5 Pro"],
-        index=0,
-    )
+    model_names = list(MODEL_OPTIONS.keys())
 
-    if chief_choice == "Claude Opus 4.6":
-        role_map = {"chief": "Claude", "assistant": "Gemini"}
-        assistant_label = "Gemini 2.5 Pro"
-    else:
-        role_map = {"chief": "Gemini", "assistant": "Claude"}
-        assistant_label = "Claude Opus 4.6"
+    chief_choice = st.selectbox("Select Chief Grader", model_names, index=0)
+    remaining = [m for m in model_names if m != chief_choice]
+    assistant_choice = st.selectbox("Select Assistant", remaining, index=0)
+
+    role_map = {
+        "chief": MODEL_OPTIONS[chief_choice],
+        "assistant": MODEL_OPTIONS[assistant_choice],
+    }
 
     st.info(
         f"**Chief Grader:** {chief_choice}\n\n"
-        f"**Assistant:** {assistant_label}"
+        f"**Assistant:** {assistant_choice}"
     )
+
+# --- Validate API keys for selected models ---
+keys_ok = True
+for role_label, role_key in [("Chief", "chief"), ("Assistant", "assistant")]:
+    internal = role_map[role_key]
+    env_name, env_val = MODEL_KEY_REQUIRED[internal]
+    if not env_val:
+        st.error(f"Missing `{env_name}` for {role_label}. Add it to your `.env` file.")
+        keys_ok = False
 
 # --- File uploaders ---
 st.subheader("Upload Documents")
@@ -260,7 +318,7 @@ if st.button("Process Grading", disabled=(not all_uploaded or not keys_ok)):
     )
 
     chief_label = chief_choice
-    asst_label = assistant_label
+    asst_label = assistant_choice
 
     with st.status("Grading in progress...", expanded=True) as status:
         # ------ Phase 1 ------
