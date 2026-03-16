@@ -1,0 +1,6 @@
+streamlit
+anthropic
+google-genai
+python-dotenv
+fpdf2
+PyPDF2
